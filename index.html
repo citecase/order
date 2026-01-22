@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vegetable Order App</title>
+    <title>Grocery Order App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -14,7 +14,7 @@
             transition: all 0.2s ease;
         }
         .item-card:active {
-            transform: scale(0.98);
+            transform: scale(0.99);
         }
         .whatsapp-btn {
             background-color: #25D366;
@@ -25,7 +25,6 @@
             z-index: 40;
             background-color: #f3f4f6;
         }
-        /* Custom scrollbar for summary */
         #summary-list::-webkit-scrollbar {
             width: 4px;
         }
@@ -35,20 +34,21 @@
         }
     </style>
 </head>
-<body class="pb-32">
+<body class="pb-40">
     <div class="max-w-md mx-auto p-4">
-        <!-- Sticky Header with Search -->
+        <!-- Sticky Header with Search & Custom Entry -->
         <div class="sticky-header pt-4 pb-2">
             <header class="mb-4">
                 <h1 class="text-3xl font-bold text-green-800">Order List</h1>
-                <p class="text-gray-600">Select items (in kg)</p>
+                <p class="text-gray-600 font-medium">Select items in KG or Grams</p>
             </header>
 
-            <div class="relative mb-4">
+            <!-- Search Bar -->
+            <div class="relative mb-3">
                 <input 
                     type="text" 
                     id="search-input" 
-                    placeholder="Search (e.g. Ulli or Onion)..." 
+                    placeholder="Search for items..." 
                     oninput="handleSearch()"
                     class="w-full p-4 rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-green-500 focus:outline-none pl-12"
                 >
@@ -56,16 +56,29 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
             </div>
+
+            <!-- Custom Entry Section -->
+            <div class="bg-white p-3 rounded-xl border border-dashed border-green-300 mb-4 flex space-x-2 shadow-sm">
+                <input 
+                    type="text" 
+                    id="custom-item-name" 
+                    placeholder="New Item Name..." 
+                    class="flex-1 px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-green-400"
+                >
+                <button onclick="addCustomItem()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm active:bg-green-700">
+                    Add +
+                </button>
+            </div>
         </div>
 
         <!-- Item List -->
         <div id="items-container" class="space-y-3">
-            <!-- Items will be injected here by JS -->
+            <!-- Items injected by JS -->
         </div>
 
         <!-- No Results Placeholder -->
         <div id="no-results" class="hidden text-center py-10">
-            <p class="text-gray-500">No items found matching your search.</p>
+            <p class="text-gray-500">No items found. Use the "Add +" box above to add a custom item!</p>
         </div>
     </div>
 
@@ -87,7 +100,7 @@
     <div id="review-modal" class="hidden fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 z-[100]">
         <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom duration-300">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold text-gray-800">Review Order</h2>
+                <h2 class="text-2xl font-bold text-gray-800">Final Summary</h2>
                 <button onclick="closeReviewModal()" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -101,7 +114,7 @@
 
             <div class="flex flex-col space-y-3">
                 <button onclick="sendToWhatsApp()" class="whatsapp-btn w-full text-white font-bold py-4 rounded-xl flex items-center justify-center space-x-2 shadow-lg">
-                    <span>Confirm & Send via WhatsApp</span>
+                    <span>Send to WhatsApp</span>
                 </button>
                 <button onclick="closeReviewModal()" class="w-full text-gray-500 font-semibold py-2">
                     Back to Edit
@@ -110,68 +123,86 @@
         </div>
     </div>
 
-    <!-- Empty List Modal -->
-    <div id="empty-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100]">
-        <div class="bg-white p-6 rounded-2xl max-w-xs w-full text-center">
-            <h3 class="text-lg font-bold mb-2">Wait!</h3>
-            <p class="text-gray-600 mb-4">Please select at least one item before sending.</p>
-            <button onclick="closeEmptyModal()" class="bg-gray-800 text-white px-6 py-2 rounded-lg">Okay</button>
-        </div>
-    </div>
-
     <script>
         const WHATSAPP_NUMBER = "8075088738";
-        const ITEM_LIST = [
-            { mal: "Ulli", eng: "Onion" },
-            { mal: "Savola", eng: "Big Onion" },
-            { mal: "Kunjulli", eng: "Shallots (Pearl Onions)" },
-            { mal: "Uralakizhangu", eng: "Potato" },
-            { mal: "Thakkali", eng: "Tomato" },
-            { mal: "Vendakka", eng: "Okra (Ladies Finger)" },
-            { mal: "Vazhuthananga", eng: "Eggplant / Brinjal" },
-            { mal: "Pavakka", eng: "Bitter Gourd" },
-            { mal: "Muringakka", eng: "Drumstick" },
-            { mal: "Payru", eng: "Beans" },
-            { mal: "Cheera", eng: "Spinach" },
-            { mal: "Muttakoos", eng: "Cabbage" },
-            { mal: "Mathanga", eng: "Pumpkin" },
-            { mal: "Kumbalanga", eng: "Ash Gourd" },
-            { mal: "Peechinga", eng: "Ridge Gourd" },
-            { mal: "Kovakka", eng: "Ivy Gourd" },
-            { mal: "Velarikka", eng: "Yellow Cucumber" },
-            { mal: "Padavalanga", eng: "Snake Gourd" },
-            { mal: "Churakka", eng: "Bottle Gourd" },
-            { mal: "Chow Chow", eng: "Chayote Squash" },
-            { mal: "Mathura Kizhangu", eng: "Sweet Potato" },
-            { mal: "Inji", eng: "Ginger" },
-            { mal: "Manjal", eng: "Turmeric" },
-            { mal: "Mulaku", eng: "Chilly" },
-            { mal: "Velluthulli", eng: "Garlic" },
-            { mal: "Chenna", eng: "Yam" },
-            { mal: "Chembu", eng: "Colocasia / Taro" },
-            { mal: "Koorka", eng: "Chinese Potato" },
-            { mal: "Kappa", eng: "Tapioca" },
-            { mal: "Koova", eng: "Arrow Root" },
-            { mal: "Parippu", eng: "Lentil / Dal" },
-            { mal: "Kadala Parippu", eng: "Bengal Gram Dal" },
-            { mal: "Cheru Payru Parippu", eng: "Moong Dal" },
-            { mal: "Tuvara Parippu", eng: "Toor Dal" },
-            { mal: "Chuvana Parippu", eng: "Masoor Dal" },
-            { mal: "Uzhunnu Parippu", eng: "Urad Dal" },
-            { mal: "Cheru Payru", eng: "Whole Green Gram" },
-            { mal: "Kadala", eng: "ChickPeas" },
-            { mal: "Mudira", eng: "Horse gram" }
+        const STORAGE_KEY = 'grocery_app_custom_items';
+
+        const DEFAULT_ITEMS = [
+            { name: "Mattari", sub: "Rose Matta Rice" },
+            { name: "Suchigotamburava", sub: "Suji Wheat Rava" },
+            { name: "Arakkunna ari", sub: "Grinding Rice" },
+            { name: "Uzhunnu", sub: "Black Gram" },
+            { name: "Pachacherupayar parippu", sub: "Green Gram Dal" },
+            { name: "Masoordal", sub: "Red Lentil" },
+            { name: "Elakka", sub: "Cardamom" },
+            { name: "Kadala", sub: "Bengal Gram" },
+            { name: "Tuvaraparippu", sub: "Toor Dal" },
+            { name: "Ayamodakam", sub: "Carom Seeds" },
+            { name: "Mulaku", sub: "Chilly" },
+            { name: "Ghee", sub: "Neyyu" },
+            { name: "Cherupayar", sub: "Whole Green Gram" },
+            { name: "Roasted rava", sub: "Varutha Rava" },
+            { name: "Idiyappa podi", sub: "String Hopper Flour" },
+            { name: "Puttupodi", sub: "Puttu Flour" },
+            { name: "Ragi powder", sub: "Finger Millet Powder" },
+            { name: "Kaduku", sub: "Mustard" },
+            { name: "Red thin aval", sub: "Flattened Rice" },
+            { name: "Kappalandi", sub: "Peanut" },
+            { name: "Uppupodi", sub: "Salt Powder" },
+            { name: "Kalluppu", sub: "Crystal Salt" },
+            { name: "Kannan devan tea", sub: "Tea Dust" },
+            { name: "Cherupayar parippu", sub: "Yellow Moong Dal" },
+            { name: "Uluva", sub: "Fenugreek" },
+            { name: "Karutha uzhunnu parippu", sub: "Black Urad Dal" },
+            { name: "Rajma", sub: "Kidney Beans" },
+            { name: "Vanpayar", sub: "Red Cowpea" },
+            { name: "Mulakupodi", sub: "Chilly Powder" },
+            { name: "Manjalpodi", sub: "Turmeric Powder" },
+            { name: "Kothamalli", sub: "Coriander" },
+            { name: "Roasted semiya", sub: "Vermicelli" },
+            { name: "Sugar", sub: "Panchasara" },
+            { name: "Sharkara", sub: "Jaggery" },
+            { name: "Poha aval", sub: "Flattened Rice" },
+            { name: "Vella kadala", sub: "White Chickpeas" },
+            { name: "Kadala paripu", sub: "Chana Dal" },
+            { name: "Ulli", sub: "Onion" },
+            { name: "Savola", sub: "Big Onion" },
+            { name: "Kunjulli", sub: "Shallots" },
+            { name: "Uralakizhangu", sub: "Potato" },
+            { name: "Thakkali", sub: "Tomato" },
+            { name: "Vendakka", sub: "Okra" },
+            { name: "Vazhuthananga", sub: "Eggplant" },
+            { name: "Pavakka", sub: "Bitter Gourd" },
+            { name: "Muringakka", sub: "Drumstick" },
+            { name: "Payru", sub: "Beans" },
+            { name: "Cheera", sub: "Spinach" },
+            { name: "Muttakoos", sub: "Cabbage" },
+            { name: "Mathanga", sub: "Pumpkin" },
+            { name: "Kumbalanga", sub: "Ash Gourd" },
+            { name: "Peechinga", sub: "Ridge Gourd" },
+            { name: "Kovakka", sub: "Ivy Gourd" },
+            { name: "Velarikka", sub: "Cucumber" },
+            { name: "Padavalanga", sub: "Snake Gourd" },
+            { name: "Churakka", sub: "Bottle Gourd" }
         ];
 
+        let ITEM_LIST = [];
         let cart = {};
-        const STEP_SIZE = 0.5;
 
         function init() {
+            // Load custom items from local storage
+            const savedItems = localStorage.getItem(STORAGE_KEY);
+            const customItems = savedItems ? JSON.parse(savedItems) : [];
+            
+            // Combine with default list
+            ITEM_LIST = [...customItems, ...DEFAULT_ITEMS];
+            
             renderItems(ITEM_LIST);
         }
 
         function formatQty(val) {
-            return val % 1 === 0 ? val.toString() : val.toFixed(1);
+            if (val === 0) return "0";
+            return parseFloat(val.toFixed(2)).toString();
         }
 
         function renderItems(items) {
@@ -187,18 +218,191 @@
             }
 
             items.forEach((item) => {
-                const itemKey = item.mal;
+                const itemKey = item.name;
                 const qty = cart[itemKey] || 0;
+                
                 const card = document.createElement('div');
+                const activeClasses = qty > 0 ? 'border-green-400 bg-green-50 shadow-md' : 'border-transparent bg-white shadow-sm';
                 
-                const activeClasses = qty > 0 ? 'border-green-400 bg-green-50/30 shadow-md' : 'border-transparent bg-white shadow-sm';
-                
-                card.className = `item-card p-4 rounded-2xl flex items-center justify-between border ${activeClasses}`;
+                card.className = `item-card p-4 rounded-2xl flex flex-col border ${activeClasses}`;
                 card.id = `card-${itemKey}`;
                 
                 card.innerHTML = `
-                    <div class="flex-1 mr-2">
-                        <h3 class="font-bold text-gray-800 text-lg leading-tight">${item.mal}</h3>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex-1 mr-2">
+                            <h3 class="font-bold text-gray-800 text-lg leading-tight">${item.name}</h3>
+                            <p class="text-xs text-gray-500 uppercase font-medium">${item.sub || 'Custom Item'}</p>
+                        </div>
+                        
+                        <div class="text-right">
+                             <div class="text-xs font-bold text-gray-400 uppercase tracking-widest">Current Total</div>
+                             <div class="text-xl font-black text-green-700 leading-none qty-display">${qty < 1 && qty > 0 ? (Math.round(qty * 1000)) + 'g' : formatQty(qty) + ' kg'}</div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col space-y-2 border-t border-gray-100 pt-3">
+                        <!-- KG Row -->
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-gray-400 uppercase">Adjust KG</span>
+                            <div class="flex items-center space-x-2 bg-white rounded-xl p-1 shadow-sm border border-gray-100">
+                                <button onclick="updateQty('${itemKey}', -1)" class="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-50 text-gray-500 font-bold active:bg-gray-200 border border-gray-200">- 1kg</button>
+                                <button onclick="updateQty('${itemKey}', 1)" class="w-24 h-10 flex items-center justify-center rounded-lg bg-green-600 text-white font-bold shadow-sm active:bg-green-700">+ 1 kg</button>
+                            </div>
+                        </div>
+
+                        <!-- Grams Row -->
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-gray-400 uppercase">Adjust Grams</span>
+                            <div class="flex items-center space-x-2 bg-white rounded-xl p-1 shadow-sm border border-gray-100">
+                                <button onclick="updateQty('${itemKey}', -0.05)" class="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-50 text-blue-500 text-xs font-bold active:bg-gray-200 border border-gray-200">- 50g</button>
+                                <button onclick="updateQty('${itemKey}', 0.05)" class="w-24 h-10 flex items-center justify-center rounded-lg bg-blue-500 text-white text-xs font-bold shadow-sm active:bg-blue-600">+ 50 grams</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function addCustomItem() {
+            const input = document.getElementById('custom-item-name');
+            const name = input.value.trim();
+            if (!name) return;
+
+            // Check if already in current list
+            if (ITEM_LIST.some(i => i.name.toLowerCase() === name.toLowerCase())) {
+                input.value = '';
+                document.getElementById('search-input').value = name;
+                handleSearch();
+                return;
+            }
+
+            const newItem = { name: name, sub: "Added by You" };
+            
+            // 1. Update In-Memory List
+            ITEM_LIST.unshift(newItem);
+            
+            // 2. Save Custom Item specifically to LocalStorage
+            const savedItems = localStorage.getItem(STORAGE_KEY);
+            const customItems = savedItems ? JSON.parse(savedItems) : [];
+            customItems.unshift(newItem);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(customItems));
+
+            input.value = '';
+            
+            // 3. Re-render UI
+            handleSearch();
+            updateQty(name, 1);
+        }
+
+        function handleSearch() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = ITEM_LIST.filter(item => 
+                item.name.toLowerCase().includes(query) || 
+                (item.sub && item.sub.toLowerCase().includes(query))
+            );
+            renderItems(filtered);
+        }
+
+        function updateQty(itemKey, delta) {
+            if (!cart[itemKey]) cart[itemKey] = 0;
+            let newVal = cart[itemKey] + delta;
+            newVal = Math.max(0, Math.round(newVal * 100) / 100);
+            cart[itemKey] = newVal;
+            
+            const card = document.getElementById(`card-${itemKey}`);
+            if (card) {
+                const display = card.querySelector('.qty-display');
+                if (display) {
+                    display.innerText = newVal < 1 && newVal > 0 ? (Math.round(newVal * 1000)) + 'g' : formatQty(newVal) + ' kg';
+                }
+                
+                if (newVal > 0) {
+                    card.classList.add('border-green-400', 'bg-green-50', 'shadow-md');
+                    card.classList.remove('border-transparent', 'bg-white', 'shadow-sm');
+                } else {
+                    card.classList.remove('border-green-400', 'bg-green-50', 'shadow-md');
+                    card.classList.add('border-transparent', 'bg-white', 'shadow-sm');
+                }
+            }
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const activeItems = Object.entries(cart).filter(([_, qty]) => qty > 0);
+            const count = activeItems.length;
+            document.getElementById('selection-count').innerText = `${count} ${count === 1 ? 'item' : 'items'} selected`;
+            document.getElementById('send-btn').disabled = count === 0;
+        }
+
+        function clearAll() {
+            cart = {};
+            document.getElementById('search-input').value = '';
+            renderItems(ITEM_LIST);
+            updateSummary();
+        }
+
+        function showReviewModal() {
+            const activeItems = Object.entries(cart).filter(([_, qty]) => qty > 0);
+            const listContainer = document.getElementById('summary-list');
+            listContainer.innerHTML = '';
+            
+            activeItems.forEach(([itemKey, qty]) => {
+                const itemData = ITEM_LIST.find(i => i.name === itemKey) || { name: itemKey, sub: "Custom" };
+                const item = document.createElement('div');
+                item.className = "flex justify-between items-center py-4 border-b border-gray-100 last:border-0";
+                
+                let displayQty = qty < 1 ? (Math.round(qty * 1000)) + "g" : qty + " kg";
+
+                item.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="font-bold text-gray-800">${itemKey}</span>
+                        <span class="text-xs text-gray-400 uppercase font-medium">${itemData.sub}</span>
+                    </div>
+                    <span class="font-black text-green-600 bg-green-50 px-4 py-1.5 rounded-full text-sm">${displayQty}</span>
+                `;
+                listContainer.appendChild(item);
+            });
+
+            document.getElementById('review-modal').classList.remove('hidden');
+        }
+
+        function closeReviewModal() {
+            document.getElementById('review-modal').classList.add('hidden');
+        }
+
+        function sendToWhatsApp() {
+            const activeItems = Object.entries(cart).filter(([_, qty]) => qty > 0);
+            if (activeItems.length === 0) return;
+
+            let message = "📦 *New Order Request*\n\n";
+            activeItems.forEach(([itemKey, qty], index) => {
+                let displayQty = qty < 1 ? (Math.round(qty * 1000)) + "g" : qty + " kg";
+                message += `${index + 1}. *${itemKey}*: ${displayQty}\n`;
+            });
+            message += "\nPlease confirm.";
+
+            const encodedMessage = encodeURIComponent(message);
+            const url = `https://wa.me/91${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+            
+            window.location.href = url;
+            
+            setTimeout(() => {
+                const link = document.createElement('a');
+                link.href = url;
+                link.target = "_blank";
+                link.click();
+            }, 100);
+            
+            closeReviewModal();
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
+
+gray-800 text-lg leading-tight">${item.mal}</h3>
                         <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">${item.eng}</p>
                     </div>
                     <div class="flex items-center space-x-2 bg-gray-100/50 rounded-xl p-1 shrink-0">
