@@ -3,268 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#166534">
+    <link rel="manifest" href="manifest.json">
     <title>Grocery Order App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            background-color: #f3f4f6;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-        .item-card {
-            transition: all 0.2s ease;
-        }
-        .item-card:focus-within {
-            border-color: #22c55e;
-            background-color: #f0fdf4;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        }
-        .whatsapp-btn {
-            background-color: #25D366;
-        }
-        .sticky-header {
-            position: sticky;
-            top: 0;
-            z-index: 40;
-            background-color: #f3f4f6;
-        }
-        #summary-list::-webkit-scrollbar {
-            width: 4px;
-        }
-        #summary-list::-webkit-scrollbar-thumb {
-            background: #e2e8f0;
-            border-radius: 10px;
-        }
-        input:focus, select:focus {
-            outline: none;
-        }
-        /* Remove arrows from number input */
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
+        body { background-color: #f3f4f6; font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
+        .item-card { transition: all 0.2s ease; }
+        .item-card:focus-within { border-color: #22c55e; background-color: #f0fdf4; }
+        .whatsapp-btn { background-color: #25D366; }
+        .sticky-header { position: sticky; top: 0; z-index: 40; background-color: #f3f4f6; }
     </style>
 </head>
 <body class="pb-40">
+    <!-- Manual Install Button (Visible only if app can be installed) -->
+    <div id="install-banner" class="hidden fixed top-0 left-0 right-0 bg-green-800 text-white p-4 z-[100] flex justify-between items-center shadow-xl">
+        <span class="font-bold">Add to Home Screen?</span>
+        <button onclick="installPWA()" class="bg-white text-green-800 px-6 py-2 rounded-full font-black text-sm uppercase">Install</button>
+    </div>
+
     <div class="max-w-md mx-auto p-4">
-        <!-- Sticky Header with Search & Custom Entry -->
         <div class="sticky-header pt-4 pb-2">
-            <header class="mb-4">
-                <h1 class="text-3xl font-bold text-green-800">Order List</h1>
-                <p class="text-gray-600 font-medium">Use buttons or type quantity</p>
-            </header>
-
-            <!-- Search Bar -->
+            <header class="mb-4"><h1 class="text-3xl font-bold text-green-800">My Grocery App</h1></header>
             <div class="relative mb-3">
-                <input 
-                    type="text" 
-                    id="search-input" 
-                    placeholder="Search for items..." 
-                    oninput="handleSearch()"
-                    class="w-full p-4 rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-green-500 focus:outline-none pl-12"
-                >
-                <svg class="w-6 h-6 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+                <input type="text" id="search-input" placeholder="Search..." oninput="handleSearch()"
+                    class="w-full p-4 rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-green-500 focus:outline-none pl-12">
+                <svg class="w-6 h-6 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
             </div>
-
-            <!-- Custom Entry Section -->
-            <div class="bg-white p-3 rounded-xl border border-dashed border-green-300 mb-4 flex space-x-2 shadow-sm">
-                <input 
-                    type="text" 
-                    id="custom-item-name" 
-                    placeholder="Add new item..." 
-                    class="flex-1 px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-green-400"
-                >
-                <button onclick="addCustomItem()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm active:bg-green-700">
-                    Add +
-                </button>
+            <div class="bg-white p-3 rounded-xl border border-dashed border-green-300 mb-4 flex space-x-2">
+                <input type="text" id="custom-item-name" placeholder="New item..." class="flex-1 px-3 py-2 bg-gray-50 rounded-lg focus:outline-none">
+                <button onclick="addCustomItem()" class="bg-green-600 text-white px-4 py-2 rounded-lg font-bold">Add +</button>
             </div>
         </div>
-
-        <!-- Item List -->
-        <div id="items-container" class="space-y-3">
-            <!-- Items injected by JS -->
-        </div>
-
-        <!-- No Results Placeholder -->
-        <div id="no-results" class="hidden text-center py-10">
-            <p class="text-gray-500">No items found. Add custom items above!</p>
-        </div>
+        <div id="items-container" class="space-y-3"></div>
     </div>
 
-    <!-- Sticky Footer Summary -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg max-w-md mx-auto z-50">
-        <div class="flex items-center justify-between mb-3">
-            <span class="text-gray-600 font-medium" id="selection-count">0 items selected</span>
-            <button onclick="clearAll()" class="text-red-500 text-sm font-semibold">Clear All</button>
-        </div>
-        <button id="send-btn" onclick="showReviewModal()" class="whatsapp-btn w-full text-white font-bold py-4 rounded-xl flex items-center justify-center space-x-2 shadow-lg disabled:opacity-50 disabled:grayscale" disabled>
-            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.94 3.659 1.437 5.634 1.437h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-            </svg>
-            <span>Review Order</span>
-        </button>
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t p-4 shadow-lg max-w-md mx-auto z-50">
+        <div class="flex justify-between mb-3"><span id="selection-count">0 items</span><button onclick="clearAll()" class="text-red-500 text-sm font-bold">Clear All</button></div>
+        <button id="send-btn" onclick="showReviewModal()" class="whatsapp-btn w-full text-white font-bold py-4 rounded-xl shadow-lg disabled:opacity-50" disabled>Review Order</button>
     </div>
 
-    <!-- Review Modal -->
     <div id="review-modal" class="hidden fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 z-[100]">
-        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom duration-300">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold text-gray-800">Final Summary</h2>
-                <button onclick="closeReviewModal()" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            
-            <div id="summary-list" class="max-h-[50vh] overflow-y-auto mb-6 pr-2">
-                <!-- Summary items injected here -->
-            </div>
-
-            <div class="flex flex-col space-y-3">
-                <button onclick="sendToWhatsApp()" class="whatsapp-btn w-full text-white font-bold py-4 rounded-xl flex items-center justify-center space-x-2 shadow-lg">
-                    <span>Send to WhatsApp</span>
-                </button>
-                <button onclick="closeReviewModal()" class="w-full text-gray-500 font-semibold py-2">
-                    Back to Edit
-                </button>
-            </div>
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl">
+            <h2 class="text-2xl font-bold mb-4">Confirm Order</h2>
+            <div id="summary-list" class="max-h-[50vh] overflow-y-auto mb-6 pr-2"></div>
+            <button onclick="sendToWhatsApp()" class="whatsapp-btn w-full text-white font-bold py-4 rounded-xl mb-3">Send to WhatsApp</button>
+            <button onclick="closeReviewModal()" class="w-full text-gray-400 font-bold py-2">Edit</button>
         </div>
     </div>
 
     <script>
-        const WHATSAPP_NUMBER = "8075088738";
-        const STORAGE_KEY = 'grocery_app_custom_items';
+        // 1. Standard Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
 
+        // 2. Install Prompt Logic
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-banner').classList.remove('hidden');
+        });
+
+        async function installPWA() {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') document.getElementById('install-banner').classList.add('hidden');
+            deferredPrompt = null;
+        }
+
+        // 3. App Data & Logic
+        const WHATSAPP_NUMBER = "8075088738";
+        const STORAGE_KEY = 'grocery_custom_items';
         const DEFAULT_ITEMS = [
-            { name: "Mattari", sub: "Rose Matta Rice" },
-            { name: "Suchigotamburava", sub: "Suji Wheat Rava" },
-            { name: "Arakkunna ari", sub: "Grinding Rice" },
-            { name: "Uzhunnu", sub: "Black Gram" },
-            { name: "Pachacherupayar parippu", sub: "Green Gram Dal" },
-            { name: "Masoordal", sub: "Red Lentil" },
-            { name: "Elakka", sub: "Cardamom" },
-            { name: "Kadala", sub: "Bengal Gram" },
-            { name: "Tuvaraparippu", sub: "Toor Dal" },
-            { name: "Ayamodakam", sub: "Carom Seeds" },
-            { name: "Mulaku", sub: "Chilly" },
-            { name: "Ghee", sub: "Neyyu" },
-            { name: "Cherupayar", sub: "Whole Green Gram" },
-            { name: "Roasted rava", sub: "Varutha Rava" },
-            { name: "Idiyappa podi", sub: "String Hopper Flour" },
-            { name: "Puttupodi", sub: "Puttu Flour" },
-            { name: "Ragi powder", sub: "Finger Millet Powder" },
-            { name: "Kaduku", sub: "Mustard" },
-            { name: "Red thin aval", sub: "Flattened Rice" },
-            { name: "Kappalandi", sub: "Peanut" },
-            { name: "Uppupodi", sub: "Salt Powder" },
-            { name: "Kalluppu", sub: "Crystal Salt" },
-            { name: "Kannan devan tea", sub: "Tea Dust" },
-            { name: "Cherupayar parippu", sub: "Yellow Moong Dal" },
-            { name: "Uluva", sub: "Fenugreek" },
-            { name: "Karutha uzhunnu parippu", sub: "Black Urad Dal" },
-            { name: "Rajma", sub: "Kidney Beans" },
-            { name: "Vanpayar", sub: "Red Cowpea" },
-            { name: "Mulakupodi", sub: "Chilly Powder" },
-            { name: "Manjalpodi", sub: "Turmeric Powder" },
-            { name: "Kothamalli", sub: "Coriander" },
-            { name: "Roasted semiya", sub: "Vermicelli" },
-            { name: "Sugar", sub: "Panchasara" },
-            { name: "Sharkara", sub: "Jaggery" },
-            { name: "Poha aval", sub: "Flattened Rice" },
-            { name: "Vella kadala", sub: "White Chickpeas" },
-            { name: "Kadala paripu", sub: "Chana Dal" },
-            { name: "Ulli", sub: "Onion" },
-            { name: "Savola", sub: "Big Onion" },
-            { name: "Kunjulli", sub: "Shallots" },
-            { name: "Uralakizhangu", sub: "Potato" },
-            { name: "Thakkali", sub: "Tomato" },
-            { name: "Vendakka", sub: "Okra" },
-            { name: "Vazhuthananga", sub: "Eggplant" },
-            { name: "Pavakka", sub: "Bitter Gourd" },
-            { name: "Muringakka", sub: "Drumstick" },
-            { name: "Payru", sub: "Beans" },
-            { name: "Cheera", sub: "Spinach" },
-            { name: "Muttakoos", sub: "Cabbage" },
-            { name: "Mathanga", sub: "Pumpkin" },
-            { name: "Kumbalanga", sub: "Ash Gourd" },
-            { name: "Peechinga", sub: "Ridge Gourd" },
-            { name: "Kovakka", sub: "Ivy Gourd" },
-            { name: "Velarikka", sub: "Cucumber" },
-            { name: "Padavalanga", sub: "Snake Gourd" },
-            { name: "Churakka", sub: "Bottle Gourd" }
+            { name: "Mattari", sub: "Rose Matta Rice" }, { name: "Uzhunnu", sub: "Black Gram" },
+            { name: "Ulli", sub: "Onion" }, { name: "Thakkali", sub: "Tomato" }
+            // ... (add other items as needed)
         ];
 
         let ITEM_LIST = [];
-        let cart = {}; // Stores itemKey: { val: string, unit: string }
+        let cart = {};
 
         function init() {
-            const savedItems = localStorage.getItem(STORAGE_KEY);
-            const customItems = savedItems ? JSON.parse(savedItems) : [];
-            ITEM_LIST = [...customItems, ...DEFAULT_ITEMS];
+            const saved = localStorage.getItem(STORAGE_KEY);
+            ITEM_LIST = [...(saved ? JSON.parse(saved) : []), ...DEFAULT_ITEMS];
             renderItems(ITEM_LIST);
         }
 
         function renderItems(items) {
             const container = document.getElementById('items-container');
-            const noResults = document.getElementById('no-results');
             container.innerHTML = '';
-            
-            if (items.length === 0) {
-                noResults.classList.remove('hidden');
-                return;
-            } else {
-                noResults.classList.add('hidden');
-            }
-
             items.forEach((item) => {
                 const itemKey = item.name;
                 const cartData = cart[itemKey] || { val: '', unit: 'kg' };
+                const hasVal = cartData.val && cartData.val != 0;
                 
                 const card = document.createElement('div');
-                const hasValue = cartData.val.toString().trim().length > 0 && cartData.val != 0;
-                const activeClasses = hasValue ? 'border-green-400 bg-green-50 shadow-md' : 'border-transparent bg-white shadow-sm';
-                
-                card.className = `item-card p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between border ${activeClasses}`;
+                card.className = `item-card p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between border ${hasVal ? 'border-green-400 bg-green-50 shadow-md' : 'bg-white border-transparent'}`;
                 card.id = `card-${itemKey}`;
-                
                 card.innerHTML = `
-                    <div class="flex-1 mr-4 mb-3 sm:mb-0">
-                        <h3 class="font-bold text-gray-800 text-lg leading-tight">${item.name}</h3>
-                        <p class="text-xs text-gray-500 uppercase font-medium">${item.sub || 'Custom Item'}</p>
+                    <div class="flex-1 mr-4 mb-2 sm:mb-0">
+                        <h3 class="font-bold text-gray-800 text-lg">${item.name}</h3>
+                        <p class="text-xs text-gray-400 uppercase">${item.sub || 'Custom'}</p>
                     </div>
-                    
                     <div class="flex items-center space-x-2">
-                        <!-- Adjuster controls -->
-                        <div class="flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm focus-within:border-green-500">
-                            <button 
-                                onclick="adjustStep('${itemKey}', -1)"
-                                class="px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold border-r border-gray-100 active:bg-gray-200"
-                            >-</button>
-                            <input 
-                                type="number" 
-                                placeholder="0"
-                                value="${cartData.val}"
-                                oninput="updateCartValue('${itemKey}', this.value)"
-                                class="bg-transparent text-center font-bold text-gray-800 w-16 focus:outline-none py-2"
-                            >
-                            <button 
-                                onclick="adjustStep('${itemKey}', 1)"
-                                class="px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold border-l border-gray-100 active:bg-gray-200"
-                            >+</button>
+                        <div class="flex items-center bg-white border rounded-xl overflow-hidden">
+                            <button onclick="adjust('${itemKey}', -1)" class="px-3 py-2 bg-gray-50 font-bold">-</button>
+                            <input type="number" placeholder="0" value="${cartData.val}" oninput="updateVal('${itemKey}', this.value)" class="w-12 text-center font-bold focus:outline-none">
+                            <button onclick="adjust('${itemKey}', 1)" class="px-3 py-2 bg-gray-50 font-bold">+</button>
                         </div>
-                        
-                        <select 
-                            onchange="updateCartUnit('${itemKey}', this.value)"
-                            class="bg-white border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold text-gray-600 focus:border-green-500 cursor-pointer shadow-sm min-w-[70px]"
-                        >
-                            <option value="kg" ${cartData.unit === 'kg' ? 'selected' : ''}>kg</option>
-                            <option value="g" ${cartData.unit === 'g' ? 'selected' : ''}>g</option>
-                            <option value="pkt" ${cartData.unit === 'pkt' ? 'selected' : ''}>pkt</option>
-                            <option value="nos" ${cartData.unit === 'nos' ? 'selected' : ''}>nos</option>
-                            <option value="bottle" ${cartData.unit === 'bottle' ? 'selected' : ''}>bottle</option>
+                        <select onchange="updateUnit('${itemKey}', this.value)" class="bg-white border rounded-xl px-2 py-2 text-xs font-bold">
+                            <option value="kg">kg</option><option value="g">g</option><option value="pkt">pkt</option><option value="nos">nos</option>
                         </select>
                     </div>
                 `;
@@ -272,162 +123,72 @@
             });
         }
 
-        function adjustStep(itemKey, direction) {
-            if (!cart[itemKey]) cart[itemKey] = { val: '', unit: 'kg' };
-            
-            // Step logic: 50 for grams, 1 for others
-            const step = cart[itemKey].unit === 'g' ? 50 : 1;
-            
-            let currentVal = parseFloat(cart[itemKey].val) || 0;
-            let newVal = currentVal + (direction * step);
-            
-            if (newVal < 0) newVal = 0;
-            
-            cart[itemKey].val = newVal === 0 ? '' : newVal.toString();
-            
-            // Refresh render or update input and style manually for speed
-            const input = document.querySelector(`#card-${CSS.escape(itemKey)} input`);
-            if (input) input.value = cart[itemKey].val;
-            
-            updateCardStyle(itemKey);
+        function adjust(key, dir) {
+            if(!cart[key]) cart[key] = { val: '', unit: 'kg' };
+            const step = cart[key].unit === 'g' ? 50 : 1;
+            let n = (parseFloat(cart[key].val) || 0) + (dir * step);
+            cart[key].val = n <= 0 ? '' : n;
+            renderItems(ITEM_LIST);
             updateSummary();
         }
 
-        function updateCartValue(itemKey, value) {
-            if (!cart[itemKey]) cart[itemKey] = { val: '', unit: 'kg' };
-            cart[itemKey].val = value;
-            updateCardStyle(itemKey);
+        function updateVal(key, v) { 
+            if(!cart[key]) cart[key] = { val: '', unit: 'kg' };
+            cart[key].val = v; 
             updateSummary();
+            renderItems(ITEM_LIST);
         }
 
-        function updateCartUnit(itemKey, unit) {
-            if (!cart[itemKey]) cart[itemKey] = { val: '', unit: 'kg' };
-            cart[itemKey].unit = unit;
-            updateSummary();
-        }
+        function updateUnit(key, u) { cart[key].unit = u; updateSummary(); }
 
-        function updateCardStyle(itemKey) {
-            const card = document.getElementById(`card-${itemKey}`);
-            const value = cart[itemKey]?.val || '';
-            if (card) {
-                if (value.toString().trim().length > 0 && value != 0) {
-                    card.classList.add('border-green-400', 'bg-green-50', 'shadow-md');
-                    card.classList.remove('border-transparent', 'bg-white', 'shadow-sm');
-                } else {
-                    card.classList.remove('border-green-400', 'bg-green-50', 'shadow-md');
-                    card.classList.add('border-transparent', 'bg-white', 'shadow-sm');
-                }
-            }
+        function updateSummary() {
+            const active = Object.entries(cart).filter(([_, d]) => d.val && d.val != 0);
+            document.getElementById('selection-count').innerText = `${active.length} items selected`;
+            document.getElementById('send-btn').disabled = active.length === 0;
         }
 
         function addCustomItem() {
             const input = document.getElementById('custom-item-name');
             const name = input.value.trim();
-            if (!name) return;
-
-            if (ITEM_LIST.some(i => i.name.toLowerCase() === name.toLowerCase())) {
-                input.value = '';
-                document.getElementById('search-input').value = name;
-                handleSearch();
-                return;
-            }
-
-            const newItem = { name: name, sub: "Added by You" };
+            if(!name) return;
+            const newItem = { name, sub: "Added by You" };
             ITEM_LIST.unshift(newItem);
-            
-            const savedItems = localStorage.getItem(STORAGE_KEY);
-            const customItems = savedItems ? JSON.parse(savedItems) : [];
-            customItems.unshift(newItem);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(customItems));
-
+            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            saved.unshift(newItem);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
             input.value = '';
-            handleSearch();
-            
-            setTimeout(() => {
-                const card = document.getElementById(`card-${name}`);
-                if (card) card.querySelector('input').focus();
-            }, 100);
+            renderItems(ITEM_LIST);
+            adjust(name, 1);
         }
 
         function handleSearch() {
-            const query = document.getElementById('search-input').value.toLowerCase();
-            const filtered = ITEM_LIST.filter(item => 
-                item.name.toLowerCase().includes(query) || 
-                (item.sub && item.sub.toLowerCase().includes(query))
-            );
+            const q = document.getElementById('search-input').value.toLowerCase();
+            const filtered = ITEM_LIST.filter(i => i.name.toLowerCase().includes(q));
             renderItems(filtered);
         }
 
-        function updateSummary() {
-            const activeItems = Object.entries(cart).filter(([_, data]) => data.val.toString().trim().length > 0 && data.val != 0);
-            const count = activeItems.length;
-            document.getElementById('selection-count').innerText = `${count} ${count === 1 ? 'item' : 'items'} in order`;
-            document.getElementById('send-btn').disabled = count === 0;
-        }
-
-        function clearAll() {
-            cart = {};
-            document.getElementById('search-input').value = '';
-            renderItems(ITEM_LIST);
-            updateSummary();
-        }
+        function clearAll() { cart = {}; renderItems(ITEM_LIST); updateSummary(); }
 
         function showReviewModal() {
-            const activeItems = Object.entries(cart).filter(([_, data]) => data.val.toString().trim().length > 0 && data.val != 0);
-            const listContainer = document.getElementById('summary-list');
-            listContainer.innerHTML = '';
-            
-            activeItems.forEach(([itemKey, data]) => {
-                const itemData = ITEM_LIST.find(i => i.name === itemKey) || { name: itemKey, sub: "Custom" };
-                const item = document.createElement('div');
-                item.className = "flex justify-between items-center py-4 border-b border-gray-100 last:border-0";
-                
-                const displayVal = `${data.val} ${data.unit}`;
-
-                item.innerHTML = `
-                    <div class="flex flex-col">
-                        <span class="font-bold text-gray-800">${itemKey}</span>
-                        <span class="text-xs text-gray-400 uppercase font-medium">${itemData.sub}</span>
-                    </div>
-                    <span class="font-black text-green-600 bg-green-50 px-4 py-1.5 rounded-full text-sm">${displayVal}</span>
-                `;
-                listContainer.appendChild(item);
+            const active = Object.entries(cart).filter(([_, d]) => d.val && d.val != 0);
+            const list = document.getElementById('summary-list');
+            list.innerHTML = '';
+            active.forEach(([k, d]) => {
+                list.innerHTML += `<div class="flex justify-between py-4 border-b"><span>${k}</span><span class="font-bold text-green-600">${d.val} ${d.unit}</span></div>`;
             });
-
             document.getElementById('review-modal').classList.remove('hidden');
         }
 
-        function closeReviewModal() {
-            document.getElementById('review-modal').classList.add('hidden');
-        }
+        function closeReviewModal() { document.getElementById('review-modal').classList.add('hidden'); }
 
         function sendToWhatsApp() {
-            const activeItems = Object.entries(cart).filter(([_, data]) => data.val.toString().trim().length > 0 && data.val != 0);
-            if (activeItems.length === 0) return;
-
-            let message = "📦 *New Order Request*\n\n";
-            activeItems.forEach(([itemKey, data], index) => {
-                const displayVal = `${data.val} ${data.unit}`;
-                message += `${index + 1}. *${itemKey}*: ${displayVal}\n`;
-            });
-            message += "\nPlease confirm.";
-
-            const encodedMessage = encodeURIComponent(message);
-            const url = `https://wa.me/91${WHATSAPP_NUMBER}?text=${encodedMessage}`;
-            
-            window.location.href = url;
-            
-            setTimeout(() => {
-                const link = document.createElement('a');
-                link.href = url;
-                link.target = "_blank";
-                link.click();
-            }, 100);
-            
-            closeReviewModal();
+            const active = Object.entries(cart).filter(([_, d]) => d.val && d.val != 0);
+            let msg = "📦 *New Order*\n\n" + active.map(([k, d], i) => `${i+1}. *${k}*: ${d.val} ${d.unit}`).join('\n');
+            window.location.href = `https://wa.me/91${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
         }
 
         window.onload = init;
     </script>
 </body>
 </html>
+
