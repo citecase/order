@@ -1,0 +1,16 @@
+{
+"name": "Grocery Order App",
+"short_name": "Grocery",
+"start_url": "/index.html",
+"display": "standalone",
+"background_color": "#f3f4f6",
+"theme_color": "#166534",
+"icons": [
+{
+"src": "https://www.google.com/search?q=https://cdn-icons-png.flaticon.com/512/3724/3724720.png",
+"sizes": "512x512",
+"type": "image/png",
+"purpose": "any maskable"
+}
+]
+}
