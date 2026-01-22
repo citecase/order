@@ -2,10 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#166534">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="manifest.json">
-    <title>Grocery Order App</title>
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3724/3724720.png">
+    <title>Grocery Order</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #f3f4f6; font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -13,58 +16,90 @@
         .item-card:focus-within { border-color: #22c55e; background-color: #f0fdf4; }
         .whatsapp-btn { background-color: #25D366; }
         .sticky-header { position: sticky; top: 0; z-index: 40; background-color: #f3f4f6; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="pb-40">
-    <!-- Manual Install Button (Visible only if app can be installed) -->
-    <div id="install-banner" class="hidden fixed top-0 left-0 right-0 bg-green-800 text-white p-4 z-[100] flex justify-between items-center shadow-xl">
-        <span class="font-bold">Add to Home Screen?</span>
-        <button onclick="installPWA()" class="bg-white text-green-800 px-6 py-2 rounded-full font-black text-sm uppercase">Install</button>
+
+    <!-- Android/Chrome Install Prompt -->
+    <div id="install-banner" class="hidden fixed top-4 left-4 right-4 bg-green-800 text-white p-4 z-[100] flex justify-between items-center shadow-2xl rounded-2xl border border-green-600">
+        <div class="flex items-center space-x-3">
+            <img src="https://cdn-icons-png.flaticon.com/512/3724/3724720.png" class="w-10 h-10 rounded-lg">
+            <div>
+                <p class="font-bold leading-none">Install App</p>
+                <p class="text-xs opacity-80">Add to home screen</p>
+            </div>
+        </div>
+        <button onclick="installPWA()" class="bg-white text-green-800 px-5 py-2 rounded-xl font-black text-sm uppercase">Install</button>
+    </div>
+
+    <!-- iPhone Help Tip (Hidden on Android) -->
+    <div id="ios-tip" class="hidden fixed bottom-24 left-4 right-4 bg-white p-4 z-[100] rounded-2xl shadow-xl border border-gray-200 text-center">
+        <p class="text-sm text-gray-700">To install: tap <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Ios-share.svg/1200px-Ios-share.svg.png" class="inline w-4 h-4"> then <b>'Add to Home Screen'</b></p>
+        <button onclick="document.getElementById('ios-tip').remove()" class="mt-2 text-xs font-bold text-green-600 uppercase">Dismiss</button>
     </div>
 
     <div class="max-w-md mx-auto p-4">
         <div class="sticky-header pt-4 pb-2">
-            <header class="mb-4"><h1 class="text-3xl font-bold text-green-800">My Grocery App</h1></header>
+            <header class="mb-4">
+                <h1 class="text-3xl font-black text-green-900 tracking-tight">Order Grocery</h1>
+            </header>
             <div class="relative mb-3">
-                <input type="text" id="search-input" placeholder="Search..." oninput="handleSearch()"
+                <input type="text" id="search-input" placeholder="Search items..." oninput="handleSearch()"
                     class="w-full p-4 rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-green-500 focus:outline-none pl-12">
                 <svg class="w-6 h-6 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
             </div>
-            <div class="bg-white p-3 rounded-xl border border-dashed border-green-300 mb-4 flex space-x-2">
-                <input type="text" id="custom-item-name" placeholder="New item..." class="flex-1 px-3 py-2 bg-gray-50 rounded-lg focus:outline-none">
-                <button onclick="addCustomItem()" class="bg-green-600 text-white px-4 py-2 rounded-lg font-bold">Add +</button>
+            <div class="bg-white p-3 rounded-xl border border-dashed border-green-300 mb-4 flex space-x-2 shadow-sm">
+                <input type="text" id="custom-item-name" placeholder="Add something else..." class="flex-1 px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none">
+                <button onclick="addCustomItem()" class="bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold active:scale-95 transition-transform">Add +</button>
             </div>
         </div>
+
         <div id="items-container" class="space-y-3"></div>
     </div>
 
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t p-4 shadow-lg max-w-md mx-auto z-50">
-        <div class="flex justify-between mb-3"><span id="selection-count">0 items</span><button onclick="clearAll()" class="text-red-500 text-sm font-bold">Clear All</button></div>
-        <button id="send-btn" onclick="showReviewModal()" class="whatsapp-btn w-full text-white font-bold py-4 rounded-xl shadow-lg disabled:opacity-50" disabled>Review Order</button>
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-2xl max-w-md mx-auto z-50">
+        <div class="flex justify-between items-center mb-3">
+            <span id="selection-count" class="font-bold text-gray-500">0 items</span>
+            <button onclick="clearAll()" class="text-red-500 text-xs font-black uppercase tracking-widest">Clear All</button>
+        </div>
+        <button id="send-btn" onclick="showReviewModal()" class="whatsapp-btn w-full text-white font-black py-4 rounded-2xl shadow-lg disabled:opacity-50 disabled:grayscale uppercase tracking-widest" disabled>Review Order</button>
     </div>
 
-    <div id="review-modal" class="hidden fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 z-[100]">
-        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl">
-            <h2 class="text-2xl font-bold mb-4">Confirm Order</h2>
+    <div id="review-modal" class="hidden fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center p-0 sm:p-4 z-[100]">
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl transform transition-transform duration-300">
+            <h2 class="text-2xl font-black text-gray-900 mb-4">Confirm Order</h2>
             <div id="summary-list" class="max-h-[50vh] overflow-y-auto mb-6 pr-2"></div>
-            <button onclick="sendToWhatsApp()" class="whatsapp-btn w-full text-white font-bold py-4 rounded-xl mb-3">Send to WhatsApp</button>
-            <button onclick="closeReviewModal()" class="w-full text-gray-400 font-bold py-2">Edit</button>
+            <div class="space-y-3">
+                <button onclick="sendToWhatsApp()" class="whatsapp-btn w-full text-white font-black py-4 rounded-2xl shadow-xl uppercase tracking-widest">Send to WhatsApp</button>
+                <button onclick="closeReviewModal()" class="w-full text-gray-400 font-bold py-2">Go Back</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // 1. Standard Service Worker Registration
+        // --- PWA REGISTRATION ---
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(reg => {
+                    console.log('SW Registered');
+                }).catch(err => console.log('SW Error', err));
+            });
         }
 
-        // 2. Install Prompt Logic
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
             document.getElementById('install-banner').classList.remove('hidden');
         });
+
+        // Show tip for iOS users
+        const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+        if (isIos && !isStandalone) {
+            document.getElementById('ios-tip').classList.remove('hidden');
+        }
 
         async function installPWA() {
             if (!deferredPrompt) return;
@@ -74,13 +109,38 @@
             deferredPrompt = null;
         }
 
-        // 3. App Data & Logic
+        // --- APP DATA ---
         const WHATSAPP_NUMBER = "8075088738";
-        const STORAGE_KEY = 'grocery_custom_items';
+        const STORAGE_KEY = 'grocery_custom_items_v2';
         const DEFAULT_ITEMS = [
-            { name: "Mattari", sub: "Rose Matta Rice" }, { name: "Uzhunnu", sub: "Black Gram" },
-            { name: "Ulli", sub: "Onion" }, { name: "Thakkali", sub: "Tomato" }
-            // ... (add other items as needed)
+            { name: "Mattari", sub: "Rose Matta Rice" }, { name: "Suchigotamburava", sub: "Suji Wheat Rava" },
+            { name: "Arakkunna ari", sub: "Grinding Rice" }, { name: "Uzhunnu", sub: "Black Gram" },
+            { name: "Pachacherupayar parippu", sub: "Green Gram Dal" }, { name: "Masoordal", sub: "Red Lentil" },
+            { name: "Elakka", sub: "Cardamom" }, { name: "Kadala", sub: "Bengal Gram" },
+            { name: "Tuvaraparippu", sub: "Toor Dal" }, { name: "Ayamodakam", sub: "Carom Seeds" },
+            { name: "Mulaku", sub: "Chilly" }, { name: "Ghee", sub: "Neyyu" },
+            { name: "Cherupayar", sub: "Whole Green Gram" }, { name: "Roasted rava", sub: "Varutha Rava" },
+            { name: "Idiyappa podi", sub: "String Hopper Flour" }, { name: "Puttupodi", sub: "Puttu Flour" },
+            { name: "Ragi powder", sub: "Finger Millet Powder" }, { name: "Kaduku", sub: "Mustard" },
+            { name: "Red thin aval", sub: "Flattened Rice" }, { name: "Kappalandi", sub: "Peanut" },
+            { name: "Uppupodi", sub: "Salt Powder" }, { name: "Kalluppu", sub: "Crystal Salt" },
+            { name: "Kannan devan tea", sub: "Tea Dust" }, { name: "Cherupayar parippu", sub: "Yellow Moong Dal" },
+            { name: "Uluva", sub: "Fenugreek" }, { name: "Karutha uzhunnu parippu", sub: "Black Urad Dal" },
+            { name: "Rajma", sub: "Kidney Beans" }, { name: "Vanpayar", sub: "Red Cowpea" },
+            { name: "Mulakupodi", sub: "Chilly Powder" }, { name: "Manjalpodi", sub: "Turmeric Powder" },
+            { name: "Kothamalli", sub: "Coriander" }, { name: "Roasted semiya", sub: "Vermicelli" },
+            { name: "Sugar", sub: "Panchasara" }, { name: "Sharkara", sub: "Jaggery" },
+            { name: "Poha aval", sub: "Flattened Rice" }, { name: "Vella kadala", sub: "White Chickpeas" },
+            { name: "Kadala paripu", sub: "Chana Dal" }, { name: "Ulli", sub: "Onion" },
+            { name: "Savola", sub: "Big Onion" }, { name: "Kunjulli", sub: "Shallots" },
+            { name: "Uralakizhangu", sub: "Potato" }, { name: "Thakkali", sub: "Tomato" },
+            { name: "Vendakka", sub: "Okra" }, { name: "Vazhuthananga", sub: "Eggplant" },
+            { name: "Pavakka", sub: "Bitter Gourd" }, { name: "Muringakka", sub: "Drumstick" },
+            { name: "Payru", sub: "Beans" }, { name: "Cheera", sub: "Spinach" },
+            { name: "Muttakoos", sub: "Cabbage" }, { name: "Mathanga", sub: "Pumpkin" },
+            { name: "Kumbalanga", sub: "Ash Gourd" }, { name: "Peechinga", sub: "Ridge Gourd" },
+            { name: "Kovakka", sub: "Ivy Gourd" }, { name: "Velarikka", sub: "Cucumber" },
+            { name: "Padavalanga", sub: "Snake Gourd" }, { name: "Churakka", sub: "Bottle Gourd" }
         ];
 
         let ITEM_LIST = [];
@@ -101,21 +161,25 @@
                 const hasVal = cartData.val && cartData.val != 0;
                 
                 const card = document.createElement('div');
-                card.className = `item-card p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between border ${hasVal ? 'border-green-400 bg-green-50 shadow-md' : 'bg-white border-transparent'}`;
+                card.className = `item-card p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between border ${hasVal ? 'border-green-400 bg-green-50 shadow-md' : 'bg-white border-transparent shadow-sm'}`;
                 card.id = `card-${itemKey}`;
                 card.innerHTML = `
-                    <div class="flex-1 mr-4 mb-2 sm:mb-0">
+                    <div class="flex-1 mr-4 mb-3 sm:mb-0 w-full">
                         <h3 class="font-bold text-gray-800 text-lg">${item.name}</h3>
-                        <p class="text-xs text-gray-400 uppercase">${item.sub || 'Custom'}</p>
+                        <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">${item.sub || 'Custom'}</p>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="flex items-center bg-white border rounded-xl overflow-hidden">
-                            <button onclick="adjust('${itemKey}', -1)" class="px-3 py-2 bg-gray-50 font-bold">-</button>
-                            <input type="number" placeholder="0" value="${cartData.val}" oninput="updateVal('${itemKey}', this.value)" class="w-12 text-center font-bold focus:outline-none">
-                            <button onclick="adjust('${itemKey}', 1)" class="px-3 py-2 bg-gray-50 font-bold">+</button>
+                    <div class="flex items-center space-x-2 w-full sm:w-auto">
+                        <div class="flex flex-1 items-center bg-white border border-gray-100 rounded-xl overflow-hidden shadow-inner">
+                            <button onclick="adjust('${itemKey}', -1)" class="px-3 py-2 bg-gray-50 font-black text-gray-400">-</button>
+                            <input type="number" placeholder="0" value="${cartData.val}" oninput="updateVal('${itemKey}', this.value)" class="flex-1 w-12 text-center font-black text-green-700 focus:outline-none bg-transparent">
+                            <button onclick="adjust('${itemKey}', 1)" class="px-3 py-2 bg-gray-50 font-black text-gray-400">+</button>
                         </div>
-                        <select onchange="updateUnit('${itemKey}', this.value)" class="bg-white border rounded-xl px-2 py-2 text-xs font-bold">
-                            <option value="kg">kg</option><option value="g">g</option><option value="pkt">pkt</option><option value="nos">nos</option>
+                        <select onchange="updateUnit('${itemKey}', this.value)" class="bg-white border border-gray-100 rounded-xl px-2 py-2 text-xs font-black text-gray-600 focus:ring-2 focus:ring-green-500">
+                            <option value="kg" ${cartData.unit === 'kg' ? 'selected' : ''}>kg</option>
+                            <option value="g" ${cartData.unit === 'g' ? 'selected' : ''}>g</option>
+                            <option value="pkt" ${cartData.unit === 'pkt' ? 'selected' : ''}>pkt</option>
+                            <option value="nos" ${cartData.unit === 'nos' ? 'selected' : ''}>nos</option>
+                            <option value="bottle" ${cartData.unit === 'bottle' ? 'selected' : ''}>btl</option>
                         </select>
                     </div>
                 `;
@@ -128,18 +192,24 @@
             const step = cart[key].unit === 'g' ? 50 : 1;
             let n = (parseFloat(cart[key].val) || 0) + (dir * step);
             cart[key].val = n <= 0 ? '' : n;
-            renderItems(ITEM_LIST);
             updateSummary();
+            renderItems(ITEM_LIST);
         }
 
         function updateVal(key, v) { 
             if(!cart[key]) cart[key] = { val: '', unit: 'kg' };
             cart[key].val = v; 
             updateSummary();
-            renderItems(ITEM_LIST);
+            const card = document.getElementById(`card-${key}`);
+            if(v && v != 0) card.className = card.className.replace('border-transparent bg-white', 'border-green-400 bg-green-50 shadow-md');
+            else card.className = card.className.replace('border-green-400 bg-green-50 shadow-md', 'border-transparent bg-white');
         }
 
-        function updateUnit(key, u) { cart[key].unit = u; updateSummary(); }
+        function updateUnit(key, u) { 
+            if(!cart[key]) cart[key] = { val: '', unit: 'kg' };
+            cart[key].unit = u; 
+            updateSummary();
+        }
 
         function updateSummary() {
             const active = Object.entries(cart).filter(([_, d]) => d.val && d.val != 0);
@@ -151,7 +221,7 @@
             const input = document.getElementById('custom-item-name');
             const name = input.value.trim();
             if(!name) return;
-            const newItem = { name, sub: "Added by You" };
+            const newItem = { name, sub: "Personal Item" };
             ITEM_LIST.unshift(newItem);
             const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
             saved.unshift(newItem);
@@ -163,7 +233,7 @@
 
         function handleSearch() {
             const q = document.getElementById('search-input').value.toLowerCase();
-            const filtered = ITEM_LIST.filter(i => i.name.toLowerCase().includes(q));
+            const filtered = ITEM_LIST.filter(i => i.name.toLowerCase().includes(q) || (i.sub && i.sub.toLowerCase().includes(q)));
             renderItems(filtered);
         }
 
@@ -174,7 +244,7 @@
             const list = document.getElementById('summary-list');
             list.innerHTML = '';
             active.forEach(([k, d]) => {
-                list.innerHTML += `<div class="flex justify-between py-4 border-b"><span>${k}</span><span class="font-bold text-green-600">${d.val} ${d.unit}</span></div>`;
+                list.innerHTML += `<div class="flex justify-between py-4 border-b border-gray-100"><span>${k}</span><span class="font-black text-green-700">${d.val} ${d.unit}</span></div>`;
             });
             document.getElementById('review-modal').classList.remove('hidden');
         }
@@ -183,7 +253,7 @@
 
         function sendToWhatsApp() {
             const active = Object.entries(cart).filter(([_, d]) => d.val && d.val != 0);
-            let msg = "📦 *New Order*\n\n" + active.map(([k, d], i) => `${i+1}. *${k}*: ${d.val} ${d.unit}`).join('\n');
+            let msg = "📦 *NEW ORDER*\n\n" + active.map(([k, d], i) => `${i+1}. *${k}*: ${d.val} ${d.unit}`).join('\n') + "\n\nSent from Grocery App.";
             window.location.href = `https://wa.me/91${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
         }
 
