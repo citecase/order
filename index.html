@@ -6,112 +6,170 @@
     <meta name="theme-color" content="#166534">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3724/3724720.png">
-    <title>Grocery Order</title>
+    <title>Order App</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script async src="https://tally.so/widgets/embed.js"></script>
     <style>
-        body { background-color: #f3f4f6; font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
-        .item-card { transition: all 0.2s ease; }
-        .item-card:focus-within { border-color: #22c55e; background-color: #f0fdf4; }
-        .whatsapp-btn { background-color: #25D366; }
-        .sticky-header { position: sticky; top: 0; z-index: 40; background-color: #f3f4f6; }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        
+        body { 
+            background-color: #f9fafb; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        .item-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .item-card:active {
+            transform: scale(0.98);
+        }
+
+        input::-webkit-outer-spin-button, 
+        input::-webkit-inner-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .animate-slide-up {
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .tally-modal-content {
+            height: 80vh;
+            border-radius: 2rem 2rem 0 0;
+        }
     </style>
 </head>
-<body class="pb-40">
+<body class="pb-44">
 
-    <!-- Android/Chrome Install Prompt -->
-    <div id="install-banner" class="hidden fixed top-4 left-4 right-4 bg-green-800 text-white p-4 z-[100] flex justify-between items-center shadow-2xl rounded-2xl border border-green-600">
-        <div class="flex items-center space-x-3">
-            <img src="https://cdn-icons-png.flaticon.com/512/3724/3724720.png" class="w-10 h-10 rounded-lg">
-            <div>
-                <p class="font-bold leading-none">Install App</p>
-                <p class="text-xs opacity-80">Add to home screen</p>
+    <!-- Header Section -->
+    <div class="sticky top-0 z-40 bg-gray-50/80 backdrop-blur-md px-4 pt-6 pb-2">
+        <div class="max-w-md mx-auto">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Order App</h1>
+                    <p class="text-xs text-green-600 font-bold uppercase tracking-widest" id="status-text">Updating Inventory...</p>
+                </div>
+                <!-- Top Right Add Button -->
+                <button onclick="toggleTallyModal(true)" 
+                    class="bg-green-700 text-white w-14 h-14 rounded-2xl shadow-lg shadow-green-100 flex items-center justify-center active:scale-90 transition-transform"
+                    aria-label="Add an item">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                </button>
             </div>
-        </div>
-        <button onclick="installPWA()" class="bg-white text-green-800 px-5 py-2 rounded-xl font-black text-sm uppercase">Install</button>
-    </div>
 
-    <!-- iPhone Help Tip (Hidden on Android) -->
-    <div id="ios-tip" class="hidden fixed bottom-24 left-4 right-4 bg-white p-4 z-[100] rounded-2xl shadow-xl border border-gray-200 text-center">
-        <p class="text-sm text-gray-700">To install: tap <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Ios-share.svg/1200px-Ios-share.svg.png" class="inline w-4 h-4"> then <b>'Add to Home Screen'</b></p>
-        <button onclick="document.getElementById('ios-tip').remove()" class="mt-2 text-xs font-bold text-green-600 uppercase">Dismiss</button>
-    </div>
-
-    <div class="max-w-md mx-auto p-4">
-        <div class="sticky-header pt-4 pb-2">
-            <header class="mb-4">
-                <h1 class="text-3xl font-black text-green-900 tracking-tight">Order Grocery</h1>
-            </header>
-            <div class="relative mb-3">
+            <!-- Search -->
+            <div class="relative mb-2">
                 <input type="text" id="search-input" placeholder="Search items..." oninput="handleSearch()"
-                    class="w-full p-4 rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-green-500 focus:outline-none pl-12">
-                <svg class="w-6 h-6 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    class="w-full p-4 pl-12 bg-white rounded-2xl border-0 shadow-sm ring-1 ring-gray-200 focus:ring-2 focus:ring-green-500 focus:outline-none transition-all">
+                <svg class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
             </div>
-            <div class="bg-white p-3 rounded-xl border border-dashed border-green-300 mb-4 flex space-x-2 shadow-sm">
-                <input type="text" id="custom-item-name" placeholder="Add something else..." class="flex-1 px-3 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none">
-                <button onclick="addCustomItem()" class="bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold active:scale-95 transition-transform">Add +</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-md mx-auto p-4 space-y-4">
+        <!-- Items Container -->
+        <div id="items-container" class="space-y-3">
+            <div class="flex justify-center py-10">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-700"></div>
             </div>
         </div>
 
-        <div id="items-container" class="space-y-3"></div>
-    </div>
-
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-2xl max-w-md mx-auto z-50">
-        <div class="flex justify-between items-center mb-3">
-            <span id="selection-count" class="font-bold text-gray-500">0 items</span>
-            <button onclick="clearAll()" class="text-red-500 text-xs font-black uppercase tracking-widest">Clear All</button>
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden py-20 text-center">
+            <div class="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg>
+            </div>
+            <p class="text-gray-500 font-medium">No items found</p>
         </div>
-        <button id="send-btn" onclick="showReviewModal()" class="whatsapp-btn w-full text-white font-black py-4 rounded-2xl shadow-lg disabled:opacity-50 disabled:grayscale uppercase tracking-widest" disabled>Review Order</button>
     </div>
 
-    <div id="review-modal" class="hidden fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center p-0 sm:p-4 z-[100]">
-        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl transform transition-transform duration-300">
-            <h2 class="text-2xl font-black text-gray-900 mb-4">Confirm Order</h2>
-            <div id="summary-list" class="max-h-[50vh] overflow-y-auto mb-6 pr-2"></div>
+    <!-- Tally Modal (Add Item) -->
+    <div id="tally-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-end justify-center">
+        <div class="bg-white w-full max-w-md tally-modal-content animate-slide-up flex flex-col shadow-2xl">
+            <div class="flex items-center justify-between p-6 border-b border-gray-100">
+                <div>
+                    <h2 class="text-xl font-black text-gray-900">Add an Item</h2>
+                    <p class="text-xs text-gray-400">Inventory request</p>
+                </div>
+                <button onclick="toggleTallyModal(false)" class="p-2 bg-gray-50 rounded-full text-gray-400 active:bg-gray-100 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <div class="flex-1 overflow-hidden">
+                <iframe src="https://tally.so/embed/jaPVlE?alignLeft=1&hideTitle=1&transparentBackground=1" 
+                    width="100%" height="100%" frameborder="0" title="Add Item Form"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Action Bar -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-gray-100 p-4 pb-6 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50">
+        <div class="max-w-md mx-auto">
+            <div class="flex justify-between items-end mb-4 px-2">
+                <div>
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Current Order</p>
+                    <span id="selection-count" class="text-xl font-extrabold text-gray-900">0 Items</span>
+                </div>
+                <button onclick="clearAll()" class="text-red-500 text-xs font-black uppercase tracking-widest py-2 px-3 active:bg-red-50 rounded-lg transition-colors">
+                    Reset
+                </button>
+            </div>
+            <button id="review-btn" onclick="showReviewModal()" disabled
+                class="w-full bg-green-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-extrabold py-5 rounded-2xl shadow-xl shadow-green-100 flex items-center justify-center space-x-3 transition-all active:scale-[0.98]">
+                <span>REVIEW ORDER</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div id="review-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center">
+        <div class="bg-white w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2rem] p-8 shadow-2xl animate-slide-up">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6 sm:hidden"></div>
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h2 class="text-2xl font-black text-gray-900">Order Summary</h2>
+                    <p class="text-sm text-gray-500">Please review your items</p>
+                </div>
+                <button onclick="closeReviewModal()" class="p-2 bg-gray-50 rounded-full text-gray-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <div id="summary-list" class="max-h-[50vh] overflow-y-auto mb-8 pr-2 custom-scrollbar space-y-1"></div>
             <div class="space-y-3">
-                <button onclick="sendToWhatsApp()" class="whatsapp-btn w-full text-white font-black py-4 rounded-2xl shadow-xl uppercase tracking-widest">Send to WhatsApp</button>
-                <button onclick="closeReviewModal()" class="w-full text-gray-400 font-bold py-2">Go Back</button>
+                <button onclick="sendToWhatsApp()" 
+                    class="w-full bg-[#25D366] text-white font-extrabold py-5 rounded-2xl shadow-lg shadow-green-100 flex items-center justify-center space-x-3 active:scale-95 transition-transform uppercase tracking-wider">
+                    <span>Send to WhatsApp</span>
+                </button>
+                <button onclick="closeReviewModal()" class="w-full text-gray-400 font-bold py-3 text-sm uppercase tracking-widest">
+                    Continue Shopping
+                </button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- PWA REGISTRATION ---
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').then(reg => {
-                    console.log('SW Registered');
-                }).catch(err => console.log('SW Error', err));
-            });
-        }
-
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('install-banner').classList.remove('hidden');
-        });
-
-        // Show tip for iOS users
-        const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-        if (isIos && !isStandalone) {
-            document.getElementById('ios-tip').classList.remove('hidden');
-        }
-
-        async function installPWA() {
-            if (!deferredPrompt) return;
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') document.getElementById('install-banner').classList.add('hidden');
-            deferredPrompt = null;
-        }
-
-        // --- APP DATA ---
+        // --- CONFIGURATION ---
         const WHATSAPP_NUMBER = "8075088738";
-        const STORAGE_KEY = 'grocery_custom_items_v2';
+        const CART_STORAGE_KEY = 'order_app_cart_v1';
+        const BASE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSkif-nuXxTZkmwjdLhYHDoliYwTwj50-jnr6M-InND3G_niJ3A7jb2ukQeSuySyzCIHTmmcOwHNiof/pub?output=csv"; 
+
         const DEFAULT_ITEMS = [
             { name: "Mattari", sub: "Rose Matta Rice" }, { name: "Suchigotamburava", sub: "Suji Wheat Rava" },
             { name: "Arakkunna ari", sub: "Grinding Rice" }, { name: "Uzhunnu", sub: "Black Gram" },
@@ -143,122 +201,169 @@
             { name: "Padavalanga", sub: "Snake Gourd" }, { name: "Churakka", sub: "Bottle Gourd" }
         ];
 
-        let ITEM_LIST = [];
+        let activeItems = [...DEFAULT_ITEMS];
         let cart = {};
+        let searchQuery = "";
 
-        function init() {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            ITEM_LIST = [...(saved ? JSON.parse(saved) : []), ...DEFAULT_ITEMS];
-            renderItems(ITEM_LIST);
+        async function init() {
+            const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+            if (savedCart) cart = JSON.parse(savedCart);
+
+            renderItems(); 
+            await fetchSheetData(); 
+            updateTotals();
         }
 
-        function renderItems(items) {
-            const container = document.getElementById('items-container');
-            container.innerHTML = '';
-            items.forEach((item) => {
-                const itemKey = item.name;
-                const cartData = cart[itemKey] || { val: '', unit: 'kg' };
-                const hasVal = cartData.val && cartData.val != 0;
+        async function fetchSheetData() {
+            const statusText = document.getElementById('status-text');
+            try {
+                const fetchUrl = `${BASE_CSV_URL}&t=${new Date().getTime()}`;
+                const response = await fetch(fetchUrl);
+                if (!response.ok) throw new Error("Network error");
                 
-                const card = document.createElement('div');
-                card.className = `item-card p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between border ${hasVal ? 'border-green-400 bg-green-50 shadow-md' : 'bg-white border-transparent shadow-sm'}`;
-                card.id = `card-${itemKey}`;
-                card.innerHTML = `
-                    <div class="flex-1 mr-4 mb-3 sm:mb-0 w-full">
-                        <h3 class="font-bold text-gray-800 text-lg">${item.name}</h3>
-                        <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">${item.sub || 'Custom'}</p>
-                    </div>
-                    <div class="flex items-center space-x-2 w-full sm:w-auto">
-                        <div class="flex flex-1 items-center bg-white border border-gray-100 rounded-xl overflow-hidden shadow-inner">
-                            <button onclick="adjust('${itemKey}', -1)" class="px-3 py-2 bg-gray-50 font-black text-gray-400">-</button>
-                            <input type="number" placeholder="0" value="${cartData.val}" oninput="updateVal('${itemKey}', this.value)" class="flex-1 w-12 text-center font-black text-green-700 focus:outline-none bg-transparent">
-                            <button onclick="adjust('${itemKey}', 1)" class="px-3 py-2 bg-gray-50 font-black text-gray-400">+</button>
+                const csvData = await response.text();
+                const rows = csvData.split(/\r?\n/).filter(row => row.trim() !== "");
+                
+                if (rows.length > 1) {
+                    const fetchedItems = rows.slice(1).map(row => {
+                        const cols = row.split(',').map(c => c.replace(/^"|"$/g, '').trim());
+                        // Fetching from index 3 (4th column) as Name
+                        if (cols.length >= 4 && cols[3] && cols[3] !== "") {
+                            return {
+                                name: cols[3],
+                                sub: cols[4] || "Live Update"
+                            };
+                        }
+                        return null;
+                    }).filter(i => i !== null);
+
+                    if (fetchedItems.length > 0) {
+                        const existingNames = new Set(DEFAULT_ITEMS.map(i => i.name));
+                        const uniqueNewItems = fetchedItems.filter(i => !existingNames.has(i.name));
+                        activeItems = [...uniqueNewItems, ...DEFAULT_ITEMS];
+                        statusText.innerText = "Inventory Ready";
+                    } else {
+                        statusText.innerText = "No New Entries";
+                    }
+                }
+                renderItems();
+            } catch (error) {
+                statusText.innerText = "Offline Mode";
+                renderItems();
+            }
+        }
+
+        function toggleTallyModal(show) {
+            const modal = document.getElementById('tally-modal');
+            modal.classList.toggle('hidden', !show);
+            document.body.style.overflow = show ? 'hidden' : 'auto';
+        }
+
+        function renderItems() {
+            const container = document.getElementById('items-container');
+            const empty = document.getElementById('empty-state');
+            
+            const filtered = activeItems.filter(item => {
+                const searchLower = searchQuery.toLowerCase();
+                return item.name.toLowerCase().includes(searchLower) || 
+                       (item.sub && item.sub.toLowerCase().includes(searchLower));
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+            container.innerHTML = filtered.map(item => {
+                const itemData = cart[item.name] || { val: '', unit: 'kg' };
+                const isActive = itemData.val && itemData.val != 0;
+                
+                return `
+                    <div id="card-${item.name}" class="item-card p-4 rounded-3xl bg-white border-2 flex flex-col sm:flex-row items-center justify-between ${isActive ? 'border-green-500 bg-green-50/30' : 'border-transparent shadow-sm'}">
+                        <div class="flex-1 w-full mb-3 sm:mb-0">
+                            <h3 class="font-bold text-gray-900 text-lg leading-tight">${item.name}</h3>
+                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5 block">${item.sub || ''}</span>
                         </div>
-                        <select onchange="updateUnit('${itemKey}', this.value)" class="bg-white border border-gray-100 rounded-xl px-2 py-2 text-xs font-black text-gray-600 focus:ring-2 focus:ring-green-500">
-                            <option value="kg" ${cartData.unit === 'kg' ? 'selected' : ''}>kg</option>
-                            <option value="g" ${cartData.unit === 'g' ? 'selected' : ''}>g</option>
-                            <option value="pkt" ${cartData.unit === 'pkt' ? 'selected' : ''}>pkt</option>
-                            <option value="nos" ${cartData.unit === 'nos' ? 'selected' : ''}>nos</option>
-                            <option value="bottle" ${cartData.unit === 'bottle' ? 'selected' : ''}>btl</option>
-                        </select>
+                        <div class="flex items-center space-x-2 w-full sm:w-auto">
+                            <div class="flex flex-1 items-center bg-white rounded-2xl p-1 shadow-sm ring-1 ring-gray-100">
+                                <button onclick="adjust('${item.name}', -1)" class="w-10 h-10 flex items-center justify-center text-gray-400 font-bold active:bg-gray-50 rounded-xl transition-colors">-</button>
+                                <input type="number" placeholder="0" value="${itemData.val}" oninput="updateVal('${item.name}', this.value)" 
+                                    class="w-12 text-center font-extrabold text-green-700 bg-transparent focus:outline-none">
+                                <button onclick="adjust('${item.name}', 1)" class="w-10 h-10 flex items-center justify-center text-green-600 font-bold active:bg-gray-50 rounded-xl transition-colors">+</button>
+                            </div>
+                            <select onchange="updateUnit('${item.name}', this.value)" 
+                                class="bg-white rounded-2xl px-3 py-3 text-xs font-bold text-gray-600 focus:outline-none ring-1 ring-gray-100 shadow-sm appearance-none min-w-[60px] text-center">
+                                <option value="kg" ${itemData.unit === 'kg' ? 'selected' : ''}>kg</option>
+                                <option value="g" ${itemData.unit === 'g' ? 'selected' : ''}>g</option>
+                                <option value="pkt" ${itemData.unit === 'pkt' ? 'selected' : ''}>pkt</option>
+                                <option value="nos" ${itemData.unit === 'nos' ? 'selected' : ''}>nos</option>
+                                <option value="btl" ${itemData.unit === 'btl' ? 'selected' : ''}>btl</option>
+                            </select>
+                        </div>
                     </div>
                 `;
-                container.appendChild(card);
-            });
+            }).join('');
         }
 
-        function adjust(key, dir) {
-            if(!cart[key]) cart[key] = { val: '', unit: 'kg' };
-            const step = cart[key].unit === 'g' ? 50 : 1;
-            let n = (parseFloat(cart[key].val) || 0) + (dir * step);
-            cart[key].val = n <= 0 ? '' : n;
-            updateSummary();
-            renderItems(ITEM_LIST);
+        function handleSearch() { 
+            searchQuery = document.getElementById('search-input').value; 
+            renderItems(); 
         }
-
-        function updateVal(key, v) { 
-            if(!cart[key]) cart[key] = { val: '', unit: 'kg' };
-            cart[key].val = v; 
-            updateSummary();
-            const card = document.getElementById(`card-${key}`);
-            if(v && v != 0) card.className = card.className.replace('border-transparent bg-white', 'border-green-400 bg-green-50 shadow-md');
-            else card.className = card.className.replace('border-green-400 bg-green-50 shadow-md', 'border-transparent bg-white');
+        
+        function adjust(name, delta) {
+            if (!cart[name]) cart[name] = { val: 0, unit: 'kg' };
+            const step = cart[name].unit === 'g' ? 50 : 1;
+            let current = parseFloat(cart[name].val) || 0;
+            let newVal = current + (delta * step);
+            cart[name].val = newVal <= 0 ? '' : newVal;
+            saveCart(); renderItems(); updateTotals();
         }
-
-        function updateUnit(key, u) { 
-            if(!cart[key]) cart[key] = { val: '', unit: 'kg' };
-            cart[key].unit = u; 
-            updateSummary();
+        
+        function updateVal(name, val) {
+            if (!cart[name]) cart[name] = { val: 0, unit: 'kg' };
+            cart[name].val = val;
+            saveCart();
+            updateTotals();
+            const card = document.getElementById(`card-${name}`);
+            if (card) {
+                if (val && val != 0) card.classList.add('border-green-500', 'bg-green-50/30');
+                else card.classList.remove('border-green-500', 'bg-green-50/30');
+            }
         }
-
-        function updateSummary() {
-            const active = Object.entries(cart).filter(([_, d]) => d.val && d.val != 0);
-            document.getElementById('selection-count').innerText = `${active.length} items selected`;
-            document.getElementById('send-btn').disabled = active.length === 0;
+        
+        function updateUnit(name, unit) { if (!cart[name]) cart[name] = { val: 0, unit: 'kg' }; cart[name].unit = unit; saveCart(); }
+        function saveCart() { localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart)); }
+        function clearAll() { cart = {}; saveCart(); renderItems(); updateTotals(); }
+        
+        function updateTotals() {
+            const activeCount = Object.values(cart).filter(d => d.val && d.val != 0).length;
+            document.getElementById('selection-count').innerText = `${activeCount} ${activeCount === 1 ? 'Item' : 'Items'}`;
+            document.getElementById('review-btn').disabled = activeCount === 0;
         }
-
-        function addCustomItem() {
-            const input = document.getElementById('custom-item-name');
-            const name = input.value.trim();
-            if(!name) return;
-            const newItem = { name, sub: "Personal Item" };
-            ITEM_LIST.unshift(newItem);
-            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-            saved.unshift(newItem);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
-            input.value = '';
-            renderItems(ITEM_LIST);
-            adjust(name, 1);
-        }
-
-        function handleSearch() {
-            const q = document.getElementById('search-input').value.toLowerCase();
-            const filtered = ITEM_LIST.filter(i => i.name.toLowerCase().includes(q) || (i.sub && i.sub.toLowerCase().includes(q)));
-            renderItems(filtered);
-        }
-
-        function clearAll() { cart = {}; renderItems(ITEM_LIST); updateSummary(); }
 
         function showReviewModal() {
             const active = Object.entries(cart).filter(([_, d]) => d.val && d.val != 0);
-            const list = document.getElementById('summary-list');
-            list.innerHTML = '';
-            active.forEach(([k, d]) => {
-                list.innerHTML += `<div class="flex justify-between py-4 border-b border-gray-100"><span>${k}</span><span class="font-black text-green-700">${d.val} ${d.unit}</span></div>`;
-            });
+            document.getElementById('summary-list').innerHTML = active.map(([name, data]) => `
+                <div class="flex justify-between items-center py-4 border-b border-gray-50">
+                    <p class="font-bold text-gray-800">${name}</p>
+                    <div class="bg-green-50 px-4 py-2 rounded-xl"><span class="font-black text-green-700">${data.val} ${data.unit}</span></div>
+                </div>
+            `).join('');
             document.getElementById('review-modal').classList.remove('hidden');
         }
-
+        
         function closeReviewModal() { document.getElementById('review-modal').classList.add('hidden'); }
 
         function sendToWhatsApp() {
             const active = Object.entries(cart).filter(([_, d]) => d.val && d.val != 0);
-            let msg = "📦 *NEW ORDER*\n\n" + active.map(([k, d], i) => `${i+1}. *${k}*: ${d.val} ${d.unit}`).join('\n') + "\n\nSent from Grocery App.";
-            window.location.href = `https://wa.me/91${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+            let msg = "📦 *NEW ORDER*\n\n" + active.map(([n, d], i) => `${i+1}. *${n}* - ${d.val} ${d.unit}`).join('\n');
+            msg += "\n\nSent via Order App";
+            window.open(`https://wa.me/91${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
         window.onload = init;
     </script>
 </body>
 </html>
-
